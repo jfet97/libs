@@ -1,4 +1,4 @@
-import { Effect } from "@effect-app/core"
+import { Effect } from "effect"
 import { S } from "effect-app"
 import type { FieldInfo, NestedFieldInfo, UnionFieldInfo } from "../src/form.js"
 import { buildFieldInfoFromFields } from "../src/form.js"
@@ -11,7 +11,11 @@ export class NestedSchema extends S.Class<NestedSchema>()({
       deepest: S.number
     })
   }),
-  age: S.propertySignature(S.struct({ nfs: S.NumberFromString }))
+  age: S.propertySignature(
+    S.struct({
+      nfs: S.compose(S.NumberFromString, S.PositiveInt)
+    })
+  )
 }) {}
 
 export class SchemaContainsClass extends S.Class<SchemaContainsClass>()({
@@ -127,7 +131,7 @@ it("buildFieldInfo", () =>
       expectTypeOf(nestedFieldinfo).toEqualTypeOf<NestedFieldInfo<NestedSchema>>()
       expectTypeOf(nestedFieldinfo.fields.shallow).toEqualTypeOf<FieldInfo<string>>()
       expectTypeOf(nestedFieldinfo.fields.age).toEqualTypeOf<NestedFieldInfo<NestedSchema["age"]>>()
-      expectTypeOf(nestedFieldinfo.fields.age.fields.nfs).toEqualTypeOf<FieldInfo<number>>()
+      expectTypeOf(nestedFieldinfo.fields.age.fields.nfs).toEqualTypeOf<FieldInfo<number & S.PositiveIntBrand>>()
       expectTypeOf(nestedFieldinfo.fields.nested).toEqualTypeOf<NestedFieldInfo<NestedSchema["nested"]>>()
       expectTypeOf(nestedFieldinfo.fields.nested.fields.deep).toEqualTypeOf<FieldInfo<string & S.NonEmptyStringBrand>>()
       expectTypeOf(nestedFieldinfo.fields.nested.fields.nested).toEqualTypeOf<
@@ -138,6 +142,8 @@ it("buildFieldInfo", () =>
       // it's a recursive check on actual runtime structure
       testNestedFieldInfo(nestedFieldinfo)
       testNestedFieldInfo(nestedFieldinfo.fields.age)
+
+      console.log(nestedFieldinfo.fields.age.fields.nfs.rules.map((r) => r("482")))
     })
     .pipe(Effect.runPromise))
 

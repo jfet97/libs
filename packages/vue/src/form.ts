@@ -73,6 +73,10 @@ function handlePropertySignature(
     case "Transformation": {
       // TODO: this handles schemas which contains class schemas
       // but I'm not sure it's the right way to do it
+      if (propertySignature.name === "nfs") {
+        console.log({ name: propertySignature.name, to: schema.ast.to, from: schema.ast.from })
+      }
+
       return handlePropertySignature(
         new S.AST.PropertySignature(
           propertySignature.name,
@@ -280,7 +284,9 @@ function buildFieldInfo(
   const rules: UnknownRule[] = [
     ...(metadata.type === "text"
       ? stringRules
-      : numberRules) as UnknownRule[],
+      : metadata.type === "int" || metadata.type === "float"
+      ? numberRules
+      : []) as UnknownRule[],
     parseRule as UnknownRule
   ]
 
